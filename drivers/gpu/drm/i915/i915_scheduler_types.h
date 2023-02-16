@@ -29,7 +29,6 @@ struct i915_sched_attr {
 	 * The &drm_i915_private.kernel_context is assigned the lowest priority.
 	 */
 	int priority;
-	int nice;
 };
 
 /*

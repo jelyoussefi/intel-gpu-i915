@@ -363,12 +363,13 @@ void i915_drm_client_fini_bo(struct drm_i915_gem_object *obj)
 }
 
 static int
-i915_drm_client_get_object_priority(struct drm_i915_private *i915, struct drm_i915_gem_object *obj, int *highest_priority, int *nb_priorities ) 
+i915_drm_client_get_object_priority(struct drm_i915_gem_object *obj, int *highest_priority, int *nb_priorities ) 
 {
+	struct drm_i915_private *i915 = to_i915(obj->base.dev);
 	struct i915_drm_client *client;
 	unsigned long idx;
 	int prioList[256] = { -1 };
-	int priority = -1;
+	int obj_priority = -1;
 	int count = 0;
 
 	*highest_priority = -1;
@@ -376,50 +377,46 @@ i915_drm_client_get_object_priority(struct drm_i915_private *i915, struct drm_i9
 	rcu_read_lock();
 
 	xa_for_each(&i915->clients.xarray, idx, client) {
-		struct i915_gem_context *ctx;
+		struct i915_drm_client_bo *cb;
+		struct task_struct *task;  
+		int client_priority;
+		int i;
+		bool found = false;
 
 		if (READ_ONCE(client->closed))
 			continue;
 
 		client = i915_drm_client_get_rcu(client);
 
-		if (!client)
+		if (!client )
 			continue;
-
-		list_for_each_entry_rcu(ctx, &client->ctx_list, client_link) {
-			if (!i915_gem_context_get_rcu(ctx))
-				continue;
-
-			if (!i915_gem_context_is_closed(ctx)) {
-				struct i915_drm_client_bo *cb;
-				int i;
-				bool found = false;
-
-				for ( i=0; i<count; i++) {
-					if ( prioList[i] == ctx->sched.nice ) {
-						found = true;
-						break;
-					}
-				}
-
-				if ( !found ) {
-					prioList[count++] = ctx->sched.nice;
-				}
-
-				if ( ctx->sched.nice > *highest_priority ) {
-					*highest_priority = ctx->sched.nice;
-				}
-				if ( obj ) {
-					spin_lock(&obj->client.lock);
-					cb = lookup_client(client, obj);
-					if (cb) {
-						if ( ctx->sched.nice > priority ) {
-							priority = ctx->sched.nice;
-						}
-					}
-					spin_unlock(&obj->client.lock);
+			
+		task = pid_task(i915_drm_client_pid(client), PIDTYPE_PID);
+		
+		if (task_is_running(task)) {
+			client_priority = 19 - task_nice(task);
+			
+			for ( i=0; i<count; i++) {
+				if ( prioList[i] == client_priority ) {
+					found = true;
+					break;
 				}
 			}
+
+			if ( !found ) {
+				prioList[count++] = client_priority;
+			}
+
+			if ( client_priority > *highest_priority ) {
+				*highest_priority = client_priority;
+			}
+
+			spin_lock(&obj->client.lock);
+			cb = lookup_client(client, obj);
+			if (cb) {
+				obj_priority = client_priority;
+			}
+			spin_unlock(&obj->client.lock);
 		}
 
 		i915_drm_client_put(client);
@@ -429,17 +426,17 @@ i915_drm_client_get_object_priority(struct drm_i915_private *i915, struct drm_i9
 
 	*nb_priorities = count;
 
-	return priority;
+	return obj_priority;
 }
 
-bool i915_drm_client_can_object_be_swapped_out(struct drm_i915_private *i915, struct drm_i915_gem_object *obj, bool *force)
+bool i915_drm_client_can_object_be_swapped_out(struct drm_i915_gem_object *obj, bool *force)
 {
 	bool ret = true;
 	int obj_priority;
 	int highest_priority;
 	int count;
 
-	obj_priority = i915_drm_client_get_object_priority(i915, obj, &highest_priority, &count);
+	obj_priority = i915_drm_client_get_object_priority(obj, &highest_priority, &count);
 
 	if ( obj_priority > 0 && highest_priority > 0  && count > 1) {
 		if ( obj_priority < highest_priority ) {
@@ -453,14 +450,14 @@ bool i915_drm_client_can_object_be_swapped_out(struct drm_i915_private *i915, st
 	return ret ;
 }
 
-bool i915_drm_client_can_object_be_swapped_in(struct drm_i915_private *i915, struct drm_i915_gem_object *obj)
+bool i915_drm_client_can_object_be_swapped_in(struct drm_i915_gem_object *obj)
 {
 	bool ret = true;
 	int obj_priority;
 	int highest_priority;
 	int count;
 
-	obj_priority = i915_drm_client_get_object_priority(i915, obj, &highest_priority, &count);
+	obj_priority = i915_drm_client_get_object_priority(obj, &highest_priority, &count);
 
 	if ( obj_priority > 0 && highest_priority > 0  && count > 1) {
 		if ( obj_priority < highest_priority ) {

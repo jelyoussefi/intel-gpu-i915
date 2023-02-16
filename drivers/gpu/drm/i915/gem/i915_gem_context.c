@@ -799,7 +799,6 @@ static struct i915_gem_context *__create_context(struct intel_gt *gt)
 	kref_init(&ctx->ref);
 	ctx->i915 = i915;
 	ctx->sched.priority = I915_PRIORITY_NORMAL;
-	ctx->sched.nice = (19-task_nice(current)); 
 	ctx->acc_granularity = 0;
 	ctx->acc_notify = 0;
 	ctx->acc_trigger = 0;

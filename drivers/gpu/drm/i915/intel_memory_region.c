@@ -273,7 +273,7 @@ next:
 		if (i915_gem_object_is_framebuffer(obj))
 			continue;
 
-		if ( !i915_drm_client_can_object_be_swapped_out(mem->i915, obj, &unbind_active ) ) {
+		if ( !i915_drm_client_can_object_be_swapped_out(obj, &unbind_active ) ) {
 			continue;
 		}
 		else {
@@ -450,14 +450,6 @@ retry:
 						if (err == -EDEADLK || err == -EINTR || err == -ERESTARTSYS)
 							goto err_free_blocks;
 						else {
-							err = 0;
-							mutex_unlock(&mem->mm_lock);
-							if (msleep_interruptible(1)) 
-								err = -EINTR;
-							mutex_lock(&mem->mm_lock);							
-							if (err)
-								goto err_free_blocks;				
-
 							goto retry;
 						}
 					}

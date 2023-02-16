@@ -143,8 +143,8 @@ void i915_drm_client_make_resident(struct drm_i915_gem_object *obj,
 				   bool resident);
 void i915_drm_client_fini_bo(struct drm_i915_gem_object *obj);
 
-bool i915_drm_client_can_object_be_swapped_out(struct drm_i915_private *i915, struct drm_i915_gem_object *obj, bool *force);
-bool i915_drm_client_can_object_be_swapped_in(struct drm_i915_private *i915, struct drm_i915_gem_object *obj);
+bool i915_drm_client_can_object_be_swapped_out(struct drm_i915_gem_object *obj, bool *force);
+bool i915_drm_client_can_object_be_swapped_in(struct drm_i915_gem_object *obj);
 
 static inline const struct i915_drm_client_name *
 __i915_drm_client_name(const struct i915_drm_client *client)

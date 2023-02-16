@@ -323,13 +323,8 @@ static int lmem_get_pages(struct drm_i915_gem_object *obj)
 
 	/* if we saved the page contents, swap them in */
 	if (obj->swapto) {
-		if ( !i915_drm_client_can_object_be_swapped_in(to_i915(obj->base.dev), obj) ) {
-			if (msleep_interruptible(1)) {
-				err = -EINTR;
-			}
-			else {
-				err = -ENOSPC;
-			}
+		if ( !i915_drm_client_can_object_be_swapped_in(obj) ) {
+			err = -ENOSPC;
 			goto err;
 		}
 		err = swapin_pages(obj, pages, page_sizes);
