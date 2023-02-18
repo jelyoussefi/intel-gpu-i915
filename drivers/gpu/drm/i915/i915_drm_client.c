@@ -393,7 +393,7 @@ i915_drm_client_get_object_priority(struct drm_i915_gem_object *obj, int *highes
 			
 		task = pid_task(i915_drm_client_pid(client), PIDTYPE_PID);
 		
-		if (task_is_running(task)) {
+		if (true) { //task_is_running(task)
 			client_priority = 19 - task_nice(task);
 			
 			for ( i=0; i<count; i++) {
@@ -412,19 +412,23 @@ i915_drm_client_get_object_priority(struct drm_i915_gem_object *obj, int *highes
 			}
 
 			spin_lock(&obj->client.lock);
+
 			cb = lookup_client(client, obj);
 			if (cb) {
 				obj_priority = client_priority;
 			}
+			
 			spin_unlock(&obj->client.lock);
 		}
 
 		i915_drm_client_put(client);
 	}
 
+	*nb_priorities = count;
+	
 	rcu_read_unlock();
 
-	*nb_priorities = count;
+
 
 	return obj_priority;
 }
@@ -464,7 +468,7 @@ bool i915_drm_client_can_object_be_swapped_in(struct drm_i915_gem_object *obj)
 			ret = false;
 		}
 	}
-
+	
 	return ret ;
 }
 
@@ -635,6 +639,8 @@ __i915_drm_client_register(struct i915_drm_client *client,
 		return -ENOMEM;
 
 	RCU_INIT_POINTER(client->name, name);
+	
+	printk("-------------------------------------------------> JEY Client Register %s\n", i915_drm_client_name(client));
 
 	if (!clients->root)
 		return 0; /* intel_fbdev_init registers a client before sysfs */
@@ -655,6 +661,7 @@ static void __i915_drm_client_unregister(struct i915_drm_client *client)
 {
 	struct i915_drm_client_name *name;
 
+	printk("----------------------------------------< JEY Client UnRegister %s\n", i915_drm_client_name(client));
 	__client_unregister_sysfs(client);
 
 	mutex_lock(&client->update_lock);

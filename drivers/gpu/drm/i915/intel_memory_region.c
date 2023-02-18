@@ -266,21 +266,11 @@ next:
 					       typeof(*obj),
 					       mm.region_link))) {
 		unsigned long flags = 0;
-		bool unbind_active = false;
 
 		list_move_tail(&obj->mm.region_link, &still_in_list);
 
 		if (i915_gem_object_is_framebuffer(obj))
 			continue;
-
-		if ( !i915_drm_client_can_object_be_swapped_out(obj, &unbind_active ) ) {
-			continue;
-		}
-		else {
-			if (unbind_active) {
-				flags |= I915_GEM_OBJECT_UNBIND_ACTIVE;
-			}
-		}
 
 		/* Already locked this object? */
 		if (ww && ww == i915_gem_get_locking_ctx(obj))
@@ -312,8 +302,15 @@ next:
 
 		/* tell callee to do swapping */
 		if (i915_gem_object_type_has(obj, I915_GEM_OBJECT_HAS_IOMEM)
-		    && obj->mm.madv == I915_MADV_WILLNEED)
-			obj->do_swapping = true;
+		    && obj->mm.madv == I915_MADV_WILLNEED) {
+			bool unbind_active = false;
+		   	if ( i915_drm_client_can_object_be_swapped_out(obj, &unbind_active ) ) {
+				if (unbind_active) {
+					flags |= I915_GEM_OBJECT_UNBIND_ACTIVE;
+				}
+				obj->do_swapping = true;
+			}
+		}
 
 		err = i915_gem_object_unbind(obj, ww, flags);
 		if (!err) {
@@ -450,6 +447,9 @@ retry:
 						if (err == -EDEADLK || err == -EINTR || err == -ERESTARTSYS)
 							goto err_free_blocks;
 						else {
+							set_current_state(TASK_UNINTERRUPTIBLE);
+							schedule_timeout(msecs_to_jiffies(1));
+							__set_current_state(TASK_RUNNING);
 							goto retry;
 						}
 					}
@@ -481,7 +481,12 @@ err_free_blocks:
 	if (err == -EDEADLK || err == -EINTR || err == -ERESTARTSYS)
 		return err;
 
+	if (  /*get_task_mm(current) &&*/ err == -ENOSPC ) {
+		return -EAGAIN;
+	} 
 	return -ENXIO;
+
+
 }
 
 struct i915_buddy_block *
