@@ -1,0 +1,13 @@
+Kconfig*		/usr/src/intel-i915-dkms-0.6469.0.3.221221.4.5.17.0.1020
+Makefile*		/usr/src/intel-i915-dkms-0.6469.0.3.221221.4.5.17.0.1020
+backport-include	/usr/src/intel-i915-dkms-0.6469.0.3.221221.4.5.17.0.1020
+compat			/usr/src/intel-i915-dkms-0.6469.0.3.221221.4.5.17.0.1020
+defconfigs		/usr/src/intel-i915-dkms-0.6469.0.3.221221.4.5.17.0.1020
+drivers			/usr/src/intel-i915-dkms-0.6469.0.3.221221.4.5.17.0.1020
+include			/usr/src/intel-i915-dkms-0.6469.0.3.221221.4.5.17.0.1020
+# intc-scripts		/usr/src/intel-i915-dkms-0.6469.0.3.221221.4.5.17.0.1020
+kconf			/usr/src/intel-i915-dkms-0.6469.0.3.221221.4.5.17.0.1020
+local-symbols		/usr/src/intel-i915-dkms-0.6469.0.3.221221.4.5.17.0.1020
+# net			/usr/src/intel-i915-dkms-0.6469.0.3.221221.4.5.17.0.1020
+scripts			/usr/src/intel-i915-dkms-0.6469.0.3.221221.4.5.17.0.1020
+versions		/usr/src/intel-i915-dkms-0.6469.0.3.221221.4.5.17.0.1020

@@ -1,0 +1,32 @@
+#!/bin/sh
+set -e
+# Automatically added by dh_dkms/UNDECLARED
+DKMS_NAME=intel-i915-dkms
+DKMS_VERSION=0.6469.0.3.221221.4.5.17.0.1020
+
+case "$1" in
+    remove|upgrade|deconfigure)
+      if [  "$(dkms status -m $DKMS_NAME -v $DKMS_VERSION)" ]; then
+         dkms remove -m $DKMS_NAME -v $DKMS_VERSION --all
+      fi
+    ;;
+esac
+# End automatically added section
+
+#update initramfs
+case "$1" in
+    remove)
+	if [ -x /usr/sbin/update-initramfs ]; then
+  	    /usr/sbin/update-initramfs -u
+	fi
+    ;;
+
+    upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
+    ;;
+
+    *)
+	echo "postrm called with unknown argument \`$1'" >&2
+	exit 0
+    ;;
+esac
+

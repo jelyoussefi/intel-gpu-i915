@@ -1,0 +1,37 @@
+#!/usr/bin/make -f
+
+# export DH_VERBOSE = 1
+include /usr/share/dpkg/pkg-info.mk
+
+DKMS_PACKAGE_NAME=intel-i915-dkms
+DKMS_PACKAGE_VERSION=0.6469.0.3.221221.4.5.17.0.1020
+GENERATED_DKMS_FILES= \
+    debian/intel-i915-dkms.install \
+    debian/intel-i915-dkms.dkms
+
+%:
+	dh $@ --with dkms
+
+override_dh_auto_configure:
+override_dh_auto_build:
+override_dh_auto_test:
+override_dh_auto_install:
+override_dh_auto_clean:
+
+override_dh_clean:
+	-rm -f $(GENERATED_DKMS_FILES)
+	dh_clean
+
+# Be careful with these names, they must match the pkg name or you'll get an empty .deb
+override_dh_install: debian/intel-i915-dkms.install
+	dh_install --exclude=.gitignore
+
+override_dh_dkms: debian/intel-i915-dkms.dkms
+	dh_dkms -V $(DKMS_PACKAGE_VERSION)
+	sed '1d' debian/package.postinst.in >> debian/intel-i915-dkms.postinst.debhelper
+	sed '1d' debian/package.postrm.in >> debian/intel-i915-dkms.prerm.debhelper
+
+$(GENERATED_DKMS_FILES) : $(GENERATED_DKMS_FILES:=.in) debian/rules
+	sed -e 's,@DKMS_PACKAGE_NAME@,$(DKMS_PACKAGE_NAME),g' \
+	    -e 's,@DKMS_PACKAGE_VERSION@,$(DKMS_PACKAGE_VERSION),g' \
+	    <$(@:=.in) >$@

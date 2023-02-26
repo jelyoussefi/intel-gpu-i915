@@ -1,0 +1,39 @@
+PACKAGE_NAME="intel-i915-dkms"
+PACKAGE_VERSION="0.6469.0.3.221221.4.5.17.0.1020"
+AUTOINSTALL="yes"
+
+BUILT_MODULE_NAME[0]="compat"
+BUILT_MODULE_LOCATION[0]="compat"
+DEST_MODULE_LOCATION[0]="/updates"
+
+BUILT_MODULE_NAME[1]="i915"
+BUILT_MODULE_LOCATION[1]="drivers/gpu/drm/i915"
+DEST_MODULE_LOCATION[1]="/updates"
+
+BUILT_MODULE_NAME[2]="i915_spi"
+BUILT_MODULE_LOCATION[2]="drivers/gpu/drm/i915"
+DEST_MODULE_LOCATION[2]="/updates"
+
+BUILT_MODULE_NAME[3]="iaf"
+BUILT_MODULE_LOCATION[3]="drivers/gpu/drm/i915/fabric"
+DEST_MODULE_LOCATION[3]="/updates"
+
+# Find out how many CPU cores can be use if we pass appropriate -j option to make.
+# DKMS could use all cores on multicore systems to build the kernel module.
+num_cpu_cores()
+{
+  if [ -x /usr/bin/nproc ]; then
+np=8
+if [ "$np" -le "64" ]; then
+echo "$np"
+else
+echo "64"
+fi
+  else
+    echo "1"
+  fi
+}
+
+# Here is where we could specify use of the defconfig. Right now it uses the kernel configuration from /usr/src/
+MAKE="export KBUILD_EXTRA_SYMBOLS='$dkms_tree/intel-platform-vsec-dkms/kernel-$kernelver-x86_64/build/Module.symvers'; cp defconfigs/i915 .config; 'make' -j$(num_cpu_cores) KLIB=/lib/modules/$kernelver olddefconfig; 'make' -j$(num_cpu_cores) KLIB=/lib/modules/$kernelver"
+CLEAN="'make' clean"

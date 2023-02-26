@@ -1,0 +1,14 @@
+Package: intel-i915-dkms
+Version: 0.6469.0.3.221221.4.5.17.0.1020+i1-1
+Architecture: all
+Maintainer: Intel Linux Graphics Team <linux-graphics@intel.com>
+Installed-Size: 14384
+Depends: dkms (>= 2.1.0.0), flex, bison, libc6-dev | libc-dev, intel-platform-vsec-dkms, intel-platform-cse-dkms
+Conflicts: intel-gpgpu-dkms-ubuntu-5.14-oem, intel-gpgpu-dkms-ubuntu-5.17-oem
+Replaces: intel-gpgpu-dkms-ubuntu-5.14-oem, intel-gpgpu-dkms-ubuntu-5.17-oem
+Provides: i915-modules
+Section: kernel
+Priority: optional
+Homepage: https://www.intel.com
+Description: Out of tree i915 driver for Ubuntu oem kernel version 5.17.
+     Installed as dkms module.
