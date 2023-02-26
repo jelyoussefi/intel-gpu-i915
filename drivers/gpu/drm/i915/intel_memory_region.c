@@ -8,8 +8,7 @@
 #include <uapi/drm/i915_drm.h>
 
 #include "gt/intel_gt_requests.h"
-#include "gt/intel_gt_regs.h"
-#include "gem/i915_gem_context.h"
+
 #include "i915_buddy.h"
 #include "intel_memory_region.h"
 #include "i915_drv.h"
@@ -278,6 +277,7 @@ next:
 
 		if (!kref_get_unless_zero(&obj->base.refcount))
 			continue;
+
 		mutex_unlock(&mem->objects.lock);
 
 		/* Flush activity prior to grabbing locks */
@@ -375,7 +375,6 @@ put:
 	 * no forward progress, do we conclude that it is better to report
 	 * failure.
 	 */
-
 	return found ? 0 : -ENOSPC;
 }
 
@@ -443,19 +442,14 @@ retry:
 								target);
 				mutex_lock(&mem->mm_lock);
 				if (err) {
-					if ( get_task_mm(current) ) {
-						if (err == -EDEADLK || err == -EINTR || err == -ERESTARTSYS)
-							goto err_free_blocks;
-						else {
-							set_current_state(TASK_UNINTERRUPTIBLE);
-							schedule_timeout(msecs_to_jiffies(1));
-							__set_current_state(TASK_RUNNING);
-							goto retry;
-						}
+					if (err == -ENOSPC && get_task_mm(current)) {
+						set_current_state(TASK_INTERRUPTIBLE);
+						schedule_timeout(msecs_to_jiffies(1));
+						__set_current_state(TASK_RUNNING);
+						goto retry;
 					}
-					else {
+					else
 						goto err_free_blocks;
-					}
 				}
 				else
 					goto retry;
@@ -478,15 +472,10 @@ retry:
 err_free_blocks:
 	intel_memory_region_free_pages(mem, blocks);
 	mutex_unlock(&mem->mm_lock);
-	if (err == -EDEADLK || err == -EINTR || err == -ERESTARTSYS)
+	if (err == -EDEADLK || err == -EINTR || err == -ERESTARTSYS || err == -ENOSPC)
 		return err;
 
-	if (  /*get_task_mm(current) &&*/ err == -ENOSPC ) {
-		return -EAGAIN;
-	} 
 	return -ENXIO;
-
-
 }
 
 struct i915_buddy_block *

@@ -253,6 +253,7 @@ int i915_drm_client_add_bo(struct i915_drm_client *client,
 {
 	struct i915_drm_client_bo *cb;
 	struct rb_node *old;
+
 	/* only objs which can reside in LOCAL MEMORY are tracked */
 	if (!object_has_lmem(obj))
 		return 0;
@@ -639,8 +640,6 @@ __i915_drm_client_register(struct i915_drm_client *client,
 		return -ENOMEM;
 
 	RCU_INIT_POINTER(client->name, name);
-	
-	printk("-------------------------------------------------> JEY Client Register %s\n", i915_drm_client_name(client));
 
 	if (!clients->root)
 		return 0; /* intel_fbdev_init registers a client before sysfs */
@@ -661,7 +660,6 @@ static void __i915_drm_client_unregister(struct i915_drm_client *client)
 {
 	struct i915_drm_client_name *name;
 
-	printk("----------------------------------------< JEY Client UnRegister %s\n", i915_drm_client_name(client));
 	__client_unregister_sysfs(client);
 
 	mutex_lock(&client->update_lock);
